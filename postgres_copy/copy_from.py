@@ -111,6 +111,8 @@ class CopyMapping(object):
         if not silent:
             stream.write("{} records loaded\n".format(intcomma(insert_count)))
 
+        return insert_count
+
     def get_field(self, name):
         """
         Returns any fields on the database model matching the provided name.
@@ -149,6 +151,7 @@ class CopyMapping(object):
 
         Raises errors if something goes wrong. Returns nothing if everything is kosher.
         """
+
         # Make sure all of the CSV headers in the mapping actually exist
         for map_header in self.mapping.values():
             if map_header not in self.headers:

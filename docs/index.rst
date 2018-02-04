@@ -46,8 +46,20 @@ And here's how it exports a database table to a CSV.
 
     from myapp.models import MyModel
 
-
     MyModel.objects.to_csv("./data.csv")
+
+
+You can also use these methods standalone if you so need.
+
+.. code-block: python
+
+    from postgres_copy import from_csv
+    from myapp.models import MyModel
+
+    from_csv(MyModel, './data.csv', dict(name='NAME', number='NUMBER'))
+
+    query = MyModel.objects.all()
+    to_csv(MyModel, './export.csv', query, db='default')
 
 
 Installation
@@ -111,7 +123,8 @@ Here's how to create a script to import CSV data into the model. Our favorite wa
         def handle(self, *args, **kwargs):
             # Since the CSV headers match the model fields,
             # you only need to provide the file's path
-            Person.objects.from_csv('/path/to/my/import.csv')
+            insert_count = Person.objects.from_csv('/path/to/my/import.csv')
+            print "{} records inserted".format(insert_count)
 
 Run your loader.
 
@@ -157,7 +170,7 @@ And so will something like this:
 Import options
 ==============
 
-The ``from_csv`` manager method has the following arguments and keywords options.
+The ``from_csv`` manager method has the following arguments and keywords options. Returns the number of records added.
 
 .. method:: from_csv(csv_path[, mapping=None, drop_constraints=True, drop_indexes=True, using=None, delimiter=',', null=None, force_not_null=None, force_null=None, encoding=None, static_mapping=None])
 

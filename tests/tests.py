@@ -1,6 +1,10 @@
 import os
 import csv
 from datetime import date
+from django.test import TestCase
+from django.db.models import Count
+from django.core.exceptions import FieldDoesNotExist
+from django.conf import settings
 from .models import (
     MockObject,
     MockFKObject,
@@ -11,10 +15,8 @@ from .models import (
     HookedCopyMapping,
     SecondaryMockObject
 )
-from django.test import TestCase
-from django.db.models import Count
 from postgres_copy import CopyMapping
-from django.core.exceptions import FieldDoesNotExist
+from postgres_copy import from_csv, to_csv
 
 
 class BaseTest(TestCase):
@@ -186,6 +188,32 @@ class PostgresCopyToTest(BaseTest):
             items
         )
 
+class StandAloneTest(PostgresCopyToTest):
+
+    def setUp(self):
+        super(StandAloneTest, self).setUp()
+        self.export_path = os.path.join(os.path.dirname(__file__), 'export.csv')
+
+    def test_standalone_from_csv(self):
+        from_csv(MockObject, self.name_path, dict(name='NAME', number='NUMBER', dt='DATE'))
+
+        self.assertEqual(MockObject.objects.count(), 3)
+        self.assertEqual(MockObject.objects.get(name='BEN').number, 1)
+        self.assertEqual(
+            MockObject.objects.get(name='BEN').dt,
+            date(2012, 1, 1)
+        )
+
+    def test_standalone_to_csv(self):
+        self._load_objects(self.name_path)
+        to_csv(MockObject, self.export_path, MockObject.objects.all(), 'default')
+        self.assertTrue(os.path.exists(self.export_path))
+        reader = csv.DictReader(open(self.export_path, 'r'))
+        self.assertTrue(
+            ['BEN', 'JOE', 'JANE'],
+            [i['name'] for i in reader]
+        )
+
 
 class PostgresCopyFromTest(BaseTest):
 
@@ -248,7 +276,7 @@ class PostgresCopyFromTest(BaseTest):
         )
 
     def test_simple_save(self):
-        MockObject.objects.from_csv(
+        insert_count = MockObject.objects.from_csv(
             self.name_path,
             dict(name='NAME', number='NUMBER', dt='DATE')
         )
@@ -258,6 +286,7 @@ class PostgresCopyFromTest(BaseTest):
             MockObject.objects.get(name='BEN').dt,
             date(2012, 1, 1)
         )
+        self.assertEqual(insert_count, 3)
 
     def test_loud_save(self):
         MockObject.objects.from_csv(
