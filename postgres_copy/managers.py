@@ -196,7 +196,7 @@ class CopyCommand(ConstraintQuerySet):
 
 def from_csv(model, csv_path, mapping=None, drop_constraints=True, drop_indexes=True, silent=True, **kwargs):
     command = CopyCommand(model)
-    command.from_csv(csv_path, mapping, drop_constraints, drop_indexes, silent, **kwargs)
+    return command.from_csv(csv_path, mapping, drop_constraints, drop_indexes, silent, **kwargs)
 
 
 def to_csv(model, csv_path, query, db, *fields, **kwargs):
